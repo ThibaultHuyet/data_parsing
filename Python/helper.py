@@ -14,21 +14,6 @@ def parseTop(oldfile, newfile, wordsToDelete):
     else:
         pass
 
-def returnOne(oldfile, newfile, processName):
-    """
-    Takes in an oldfile location and a new file location
-    old file location is a top batch file
-    new file is the oldfile where only one process
-    """
-    if not os.path.isfile(newfile):
-        with open(oldfile) as f, open(newfile, "w") as nf:
-            for line in f:
-                if processName in line:
-                    nf.write(line)
-
-    else:
-        pass
-
 def readFile(file = "result.txt"):
     """
     This function takes in a file and returns lists of all processes as dictionaries

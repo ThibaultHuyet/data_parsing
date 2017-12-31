@@ -21,6 +21,19 @@ def setup():
                 with zipfile.ZipFile(file, 'r') as z:
                     z.extractall(InputFolder)
 
+    for file in files:
+        if '.zip' not in file:
+            print(file)
+
+def return_files(folder):
+    try:
+        files = os.listdir(folder)
+        files = [folder + '/' + s for s in files]
+        return files
+    except:
+        raise KeyError('Folder does not exist')
+        
+
 def parse(input_file, avoid = ["top", "Tasks", "%Cpu(s)", "KiB Mem", "KiB Swap"]):
     
     PIDCPU = {}

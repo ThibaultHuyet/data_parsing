@@ -1,4 +1,99 @@
+import pandas as pd
 import os.path
+import zipfile
+
+InputFolder = '../Input'
+
+def setup():
+    '''
+    This function is used to ensure that every
+    zipfile in the inputs folder is extracted
+    and dealt with correctly.
+    '''
+
+    files = os.listdir(InputFolder)
+
+    files = [InputFolder + '/' + s for s in files]
+
+    for file in files:
+        if '.zip' in file:
+            if file[:-4] not in files:
+                with zipfile.ZipFile(file, 'r') as z:
+                    z.extractall(InputFolder)
+
+def parse(input_file, avoid = ["top", "Tasks", "%Cpu(s)", "KiB Mem", "KiB Swap"]):
+    
+    PIDCPU = {}
+    PIDMEM = {}
+    
+    pid_key = {}
+    
+    # if not os.path.isfile(newfile):
+    with open(input_file) as f:
+        for line in f:
+            if not any(line.startswith(no) for no in avoid): # This removes the info at start of top
+                if not line.isspace(): # Removes empty lines
+                    new_line = line.lstrip(' ') # Some lines start with empty spaces
+                    sections = new_line.split()
+                    PID, CPU, MEM, name = sections[0], sections[8], sections[9], sections[11]
+                    if PID == 'PID':
+                        pass
+                    
+                    elif PID not in PIDCPU or PID not in PIDMEM:
+                        PIDCPU[PID] = list()
+                        PIDCPU[PID].append(float(CPU))
+                        
+                        PIDMEM[PID] = list()
+                        PIDMEM[PID].append(float(MEM))
+                        pid_key[PID] = name
+                        
+                    else:
+                        PIDCPU[PID].append(float(CPU))
+                        PIDMEM[PID].append(float(MEM))
+    
+    return PIDCPU, PIDMEM, pid_key
+
+def create_dataframe(cpu_dict, mem_dict, key, time_interval = 0.5):
+    '''
+    cpu_dict: a Dictionary of lists
+    mem_dict: a Dictionary of lists
+    
+    key = the above two dicts are using PID values as keys.
+    Not intuitive for understanding what they mean.
+    
+    Returns two dataframes, one for cpu and one for mem
+    '''
+    
+    # Turn dicts into Dataframes
+    cpu_frame = pd.DataFrame(dict([(k, pd.Series(v)) for k, v in cpu_dict.items() ]))
+    mem_frame = pd.DataFrame(dict([(k, pd.Series(v)) for k, v in mem_dict.items() ]))
+    
+    # Here I am removing every column that has a mean of 0
+    cpu_frame = cpu_frame.drop(cpu_frame.columns[cpu_frame.apply(lambda col: col.mean() == 0)], axis=1)
+    mem_frame = mem_frame.drop(mem_frame.columns[mem_frame.apply(lambda col: col.mean() == 0)], axis=1)
+
+    # Here I remove every instance of N/A with a 0
+    cpu_frame = cpu_frame.fillna(0)
+    mem_frame = mem_frame.fillna(0)
+    
+    # I rename the columns by the their command name. Before they were PID
+    cpu_frame.rename(columns = key, inplace = True)
+    mem_frame.rename(columns = key, inplace = True)
+    
+    # I remove duplicate columns here
+    cpu_frame = cpu_frame.groupby(cpu_frame.columns, axis=1).sum()
+    mem_frame = mem_frame.groupby(mem_frame.columns, axis=1).sum()
+    
+    # Adding a time index
+    df_len = len(cpu_frame)
+    cpu_frame['time'] = pd.Series([x * time_interval for x in range(df_len)])
+    cpu_frame.set_index('time')
+    
+    df_len2 = len(mem_frame)
+    mem_frame['time'] = pd.Series([x * time_interval for x in range(df_len2)])
+    mem_frame.set_index('time')
+    
+    return cpu_frame, mem_frame
 
 def parseTop(oldfile, newfile, wordsToDelete):
     """

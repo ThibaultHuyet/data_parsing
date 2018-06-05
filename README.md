@@ -1,5 +1,8 @@
 # Data Processing
 
+## Currently Re-Doing
+
+
 This respository first started off as solely a palce for me to store the notebooks that processed the performance data of my Raspberry Pi under 3 conditions.
 
 1. Idle

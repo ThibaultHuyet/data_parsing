@@ -1,7 +1,12 @@
 .vscode
 .ipynb_checkpoints
+Input
 Input/Text
 Input/Docker
+Input/DockerV2
+Input/misc
 Input/audio.json
 Results
 Python/__pycache__
+*.flac
+*.png
